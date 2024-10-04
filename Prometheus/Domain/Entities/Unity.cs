@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class Unity : TenantEntity
+    public class Unity : TenantBaseEntity
     {
         #region Son
         public ICollection<User> Users { get; set; } = new List<User>();

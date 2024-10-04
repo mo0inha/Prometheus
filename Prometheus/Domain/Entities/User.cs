@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class User : TenantEntity
+    public class User : TenantBaseEntity
     {
         public string Username { get; set; }
         public string PasswordHash { get; set; }

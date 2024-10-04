@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class Company : TenantEntity
+    public class Company : TenantBaseEntity
     {
         #region Son
         public ICollection<Unity> Unities { get; set; } = new List<Unity>();

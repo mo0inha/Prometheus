@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Shared.Entities
 {
-    public abstract class TenantEntity : BaseEntity
+    public abstract class TenantBaseEntity : BaseEntity
     {
+        protected TenantBaseEntity() { }
         public Guid TenantId { get; private set; } = Guid.NewGuid();
     }
 }
