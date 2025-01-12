@@ -1,4 +1,4 @@
-﻿using Application.Commands;
+﻿using Application.Shared;
 using Application.Shared.Interfaces;
 
 namespace Services.Api.DependencyInjection
@@ -9,22 +9,32 @@ namespace Services.Api.DependencyInjection
         {
             services.AddScoped<IRepository, Repository>();
 
-            services.AddScoped<CreateTenantCommand>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            /*
-            var assemblyApplication = Assembly.GetAssembly(typeof(CreateTenantCommand)); 
-
-            var commandTypes = assemblyApplication.GetTypes()
-                .Where(t => t.IsSubclassOf(typeof(BaseCommand<,,>)))
-                .ToList();
+            var commandTypes = assemblies.SelectMany(a => a.GetTypes()).Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseCommand<,,>))).ToList();
 
             foreach (var commandType in commandTypes)
             {
                 services.AddScoped(commandType);
             }
-            */
 
             return services;
+        }
+
+        private static bool IsSubclassOfGeneric(Type type, Type genericType)
+        {
+            while (type != null && type != typeof(object))
+            {
+                var currentType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+
+                if (currentType == genericType)
+                {
+                    return true;
+                }
+
+                type = type.BaseType;
+            }
+            return false;
         }
     }
 }
