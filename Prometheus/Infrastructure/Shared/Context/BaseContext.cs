@@ -1,11 +1,6 @@
 ﻿using Domain.Entities;
 using Infrastructure.Configs;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Shared.Context
 {
@@ -17,7 +12,10 @@ namespace Infrastructure.Shared.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL("server=localhost;database=prometheusdb;user=root;password=root");
+            if (!optionsBuilder.IsConfigured)
+            {
+                throw new InvalidOperationException("O DbContextOptions deve ser configurado externamente.");
+            }
         }
 
         public DbSet<Tenant> Tenants { get; set; }

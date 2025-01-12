@@ -4,8 +4,9 @@ using Services.Api.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<BaseContext>(options =>
-    options.UseMySQL("server=localhost;database=prometheusdb;user=root;password=root"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<BaseContext>(options => options.UseMySQL(connectionString));
 
 builder.Services.AddApplication();
 
