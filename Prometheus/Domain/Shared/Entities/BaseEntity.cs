@@ -30,7 +30,7 @@ namespace Domain.Shared.Entities
             IsActive = isActive;
             UpdateTimestamp();
         }
-        public void SetIsDelete()
+        public void SetIsDeleted()
         {
             IsDeleted = true;
             IsActive = false;

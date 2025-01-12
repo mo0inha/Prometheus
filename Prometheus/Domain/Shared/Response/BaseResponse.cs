@@ -1,10 +1,4 @@
-﻿ using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Shared.Response
+﻿namespace Domain.Shared.Response
 {
     public abstract class BaseResponse
     {
@@ -12,6 +6,9 @@ namespace Domain.Shared.Response
         public string Message { get; set; }
         public int StatusCode { get; set; }
         public Guid? Id { get; set; }
+
+        public decimal TotalPagins { get; set; }
+        public int SumRecords { get; set; }
 
         public List<string> Errors { get; private set; } = new List<string>();
 

@@ -1,4 +1,4 @@
-﻿using Infrastructure.Shared.Context;
+﻿using System.Linq.Expressions;
 
 namespace Application.Shared.Interfaces
 {
@@ -8,35 +8,11 @@ namespace Application.Shared.Interfaces
         Task<bool> ExistsAsync<TEntity>(Func<TEntity, bool> predicate) where TEntity : class;
         Task AddAsync<TEntity>(TEntity entity) where TEntity : class;
         Task SaveChangesAsync();
-    }
 
-    public class Repository : IRepository
-    {
-        private readonly BaseContext _context;
+        Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class;
+        Task DeleteAsync<TEntity>(TEntity entity) where TEntity : class;
 
-        public Repository(BaseContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<TEntity> GetByIdAsync<TEntity>(Guid id) where TEntity : class
-        {
-            return await _context.Set<TEntity>().FindAsync(id);
-        }
-
-        public async Task<bool> ExistsAsync<TEntity>(Func<TEntity, bool> predicate) where TEntity : class
-        {
-            return await Task.FromResult(_context.Set<TEntity>().Any(predicate));
-        }
-
-        public async Task AddAsync<TEntity>(TEntity entity) where TEntity : class
-        {
-            await _context.Set<TEntity>().AddAsync(entity);
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        IQueryable<T> AsQueryable<T>(params Expression<Func<T, object>>[] includes) where T : class;
+        Task<T> SingleAsync<T>(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes) where T : class;
     }
 }
