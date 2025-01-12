@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
-using Infrastructure.Configs;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace Infrastructure.Shared.Context
 {
@@ -24,9 +24,7 @@ namespace Infrastructure.Shared.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new TenantConfig());
-            modelBuilder.ApplyConfiguration(new CompanyConfig());
-            modelBuilder.ApplyConfiguration(new UnityConfig());
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
     }
 }
