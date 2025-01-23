@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Shared.Request
+﻿namespace Domain.Shared.Request
 {
     public class BaseTenantRequest<TResponse> : BaseRequest<TResponse>
     {

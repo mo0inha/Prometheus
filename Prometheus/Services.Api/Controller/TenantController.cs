@@ -65,13 +65,5 @@ namespace Services.Api.Controller
 
             return await ExecuteQuery<GetByIdTenantQuery, GetByIdTenantRequest, GetByIdTenantResponse, Tenant>(request);
         }
-
-        // GET: Buscar um Tenant por ID
-        //[HttpGet("{id:guid}")]
-        //public async Task<IActionResult> GetTenant([FromRoute] Guid id, [FromQuery] GetByIdTenantRequest request)
-        //{
-        //    var request = new GetTenantRequest { Id = id };
-        //    return await ExecuteCommand<GetTenantCommand, GetTenantRequest, GetTenantResponse, Tenant>(request);
-        //}
     }
 }

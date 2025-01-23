@@ -4,10 +4,7 @@ using Domain.Shared.Response;
 
 namespace Application.Shared
 {
-    public abstract class BaseCommand<TEntity, TRequest, TResponse>
-        where TRequest : BaseRequest<TResponse>
-        where TResponse : BaseResponse
-        where TEntity : class
+    public abstract class BaseCommand<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse where TEntity : class
     {
         protected readonly IRepository _repository;
         protected readonly TResponse _response;

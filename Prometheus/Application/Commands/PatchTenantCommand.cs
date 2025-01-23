@@ -28,9 +28,8 @@ namespace Application.Commands
         {
             if (request.Name != null) _tenant.Name = request.Name;
 
-            // Adicione lógica para outros campos, se necessário.
-
             await _repository.UpdateAsync(_tenant);
+
             return _tenant;
         }
     }

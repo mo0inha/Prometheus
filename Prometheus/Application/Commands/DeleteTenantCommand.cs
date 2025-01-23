@@ -28,8 +28,6 @@ namespace Application.Commands
         {
             _tenant.SetIsDeleted();
 
-            //await _repository.DeleteAsync(_tenant);
-
             return _tenant;
         }
     }
