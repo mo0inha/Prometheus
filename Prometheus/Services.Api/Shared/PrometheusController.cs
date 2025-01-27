@@ -1,6 +1,7 @@
 ﻿using Application.Shared;
 using Domain.Shared.Request;
 using Domain.Shared.Response;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Services.Api.Shared
@@ -14,15 +15,19 @@ namespace Services.Api.Shared
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        // Método genérico para executar comandos
-        protected async Task<IActionResult> ExecuteCommand<TCommand, TRequest, TResponse, TEntity>(TRequest request)
-            where TCommand : BaseCommand<TEntity, TRequest, TResponse>
-            where TRequest : BaseRequest<TResponse>
-            where TResponse : BaseResponse, new()
-            where TEntity : class
+
+
+        protected async Task<IActionResult> ExecuteCommand<TCommand, TRequest, TResponse, TEntity>(TRequest request) where TCommand : BaseCommand<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse, new() where TEntity : class
         {
             try
             {
+                var validator = _serviceProvider.GetRequiredService<IValidator<TRequest>>();
+                var validationResult = await validator.ValidateAsync(request);
+                if (!validationResult.IsValid)
+                {
+                    return BadRequest(validationResult.Errors);
+                }
+
                 var command = _serviceProvider.GetService<TCommand>();
 
                 if (command == null) throw new InvalidOperationException($"Comando {typeof(TCommand).Name} não registrado.");
@@ -45,11 +50,7 @@ namespace Services.Api.Shared
             }
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TQuery, TRequest, TResponse, TEntity>(TRequest request)
-            where TQuery : BaseQuery<TEntity, TRequest, TResponse>
-            where TRequest : BaseRequest<TResponse>
-            where TResponse : BaseResponse, new()
-            where TEntity : class
+        protected async Task<IActionResult> ExecuteQuery<TQuery, TRequest, TResponse, TEntity>(TRequest request) where TQuery : BaseQuery<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse, new() where TEntity : class
         {
             try
             {

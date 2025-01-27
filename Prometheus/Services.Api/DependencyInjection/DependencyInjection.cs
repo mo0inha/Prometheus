@@ -1,5 +1,7 @@
 ﻿using Application.Shared;
 using Application.Shared.Interfaces;
+using Application.Validator;
+using FluentValidation;
 
 namespace Services.Api.DependencyInjection
 {
@@ -7,26 +9,37 @@ namespace Services.Api.DependencyInjection
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // Registrar o repositório
+            // Registra o FluentValidation automaticamente para as classes de Request
+            services.AddValidatorsFromAssemblyContaining<CreateTenantValidator>();
+
+            // Registra todos os validadores automaticamente
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var validatorTypes = assemblies.SelectMany(a => a.GetTypes())
+                .Where(t => t.IsClass && !t.IsAbstract && typeof(IValidator).IsAssignableFrom(t))
+                .ToList();
+
+            foreach (var validatorType in validatorTypes)
+            {
+                services.AddScoped(validatorType);
+            }
+
+            // Adiciona o repositório e comandos/consultas
             services.AddScoped<IRepository, Repository>();
 
-            // Buscar todos os assemblies carregados
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            // Registrar os tipos de comando
+            // Registra todos os comandos automaticamente
             var commandTypes = assemblies.SelectMany(a => a.GetTypes())
-                                         .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseCommand<,,>)))
-                                         .ToList();
+                .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseCommand<,,>)))
+                .ToList();
 
             foreach (var commandType in commandTypes)
             {
                 services.AddScoped(commandType);
             }
 
-            // Registrar os tipos de consulta (Query)
+            // Registra todas as consultas automaticamente
             var queryTypes = assemblies.SelectMany(a => a.GetTypes())
-                                        .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseQuery<,,>)))
-                                        .ToList();
+                .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseQuery<,,>)))
+                .ToList();
 
             foreach (var queryType in queryTypes)
             {
