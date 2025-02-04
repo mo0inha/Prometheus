@@ -1,7 +1,7 @@
 ﻿using Application.Shared;
 using Application.Shared.Interfaces;
-using Application.Validator;
 using FluentValidation;
+using System.Reflection;
 
 namespace Services.Api.DependencyInjection
 {
@@ -9,11 +9,14 @@ namespace Services.Api.DependencyInjection
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // Registra o FluentValidation automaticamente para as classes de Request
-            services.AddValidatorsFromAssemblyContaining<CreateTenantValidator>();
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            services.AddValidatorsFromAssembly(Application.AssemblyReference.Assembly, includeInternalTypes: true);
 
-            // Registra todos os validadores automaticamente
+            services.AddSingleton<IValidationProvider>(sp => new OptionalValidationProvider(sp));
+
+
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
             var validatorTypes = assemblies.SelectMany(a => a.GetTypes())
                 .Where(t => t.IsClass && !t.IsAbstract && typeof(IValidator).IsAssignableFrom(t))
                 .ToList();
@@ -23,10 +26,8 @@ namespace Services.Api.DependencyInjection
                 services.AddScoped(validatorType);
             }
 
-            // Adiciona o repositório e comandos/consultas
             services.AddScoped<IRepository, Repository>();
 
-            // Registra todos os comandos automaticamente
             var commandTypes = assemblies.SelectMany(a => a.GetTypes())
                 .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseCommand<,,>)))
                 .ToList();
@@ -36,7 +37,6 @@ namespace Services.Api.DependencyInjection
                 services.AddScoped(commandType);
             }
 
-            // Registra todas as consultas automaticamente
             var queryTypes = assemblies.SelectMany(a => a.GetTypes())
                 .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseQuery<,,>)))
                 .ToList();
@@ -45,6 +45,7 @@ namespace Services.Api.DependencyInjection
             {
                 services.AddScoped(queryType);
             }
+
 
             return services;
         }
@@ -63,6 +64,21 @@ namespace Services.Api.DependencyInjection
                 type = type.BaseType;
             }
             return false;
+        }
+
+        public class OptionalValidationProvider : IValidationProvider
+        {
+            private readonly IServiceProvider _serviceProvider;
+
+            public OptionalValidationProvider(IServiceProvider serviceProvider)
+            {
+                _serviceProvider = serviceProvider;
+            }
+
+            public IValidator<T> GetValidator<T>()
+            {
+                return _serviceProvider.GetService<IValidator<T>>();
+            }
         }
     }
 }

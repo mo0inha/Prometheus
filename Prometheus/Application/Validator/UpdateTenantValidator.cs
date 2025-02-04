@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validator
 {
-    public class CreateTenantValidator : AbstractValidator<CreateTenantRequest>
+    public class UpdateTenantValidator : AbstractValidator<UpdateTenantRequest>
     {
-        public CreateTenantValidator()
+        public UpdateTenantValidator()
         {
             RuleFor(x => x.Name).NotEmpty().MinimumLength(10).WithMessage("funcionou pae");
         }

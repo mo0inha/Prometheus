@@ -1,31 +1,34 @@
 ﻿using Application.Shared;
 using Domain.Shared.Request;
 using Domain.Shared.Response;
-using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Services.Api.DependencyInjection;
 
 namespace Services.Api.Shared
 {
     public abstract class PrometheusController : ControllerBase
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IValidationProvider _validationProvider;
 
         protected PrometheusController(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _validationProvider = serviceProvider.GetService<IValidationProvider>();
         }
-
-
 
         protected async Task<IActionResult> ExecuteCommand<TCommand, TRequest, TResponse, TEntity>(TRequest request) where TCommand : BaseCommand<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse, new() where TEntity : class
         {
             try
             {
-                var validator = _serviceProvider.GetRequiredService<IValidator<TRequest>>();
-                var validationResult = await validator.ValidateAsync(request);
-                if (!validationResult.IsValid)
+                var validator = _validationProvider.GetValidator<TRequest>();
+                if (validator != null)
                 {
-                    return BadRequest(validationResult.Errors);
+                    var validationResult = await validator.ValidateAsync(request);
+                    if (!validationResult.IsValid)
+                    {
+                        return BadRequest(validationResult.Errors);
+                    }
                 }
 
                 var command = _serviceProvider.GetService<TCommand>();
