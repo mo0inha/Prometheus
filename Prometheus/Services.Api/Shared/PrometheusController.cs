@@ -1,6 +1,5 @@
-﻿using Application.Shared;
-using Domain.Shared.Request;
-using Domain.Shared.Response;
+﻿using Domain.Shared.Request;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Services.Api.DependencyInjection;
 
@@ -8,72 +7,39 @@ namespace Services.Api.Shared
 {
     public abstract class PrometheusController : ControllerBase
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IMediator _mediator;
         private readonly IValidationProvider _validationProvider;
 
-        protected PrometheusController(IServiceProvider serviceProvider)
+        protected PrometheusController(IMediator mediator, IValidationProvider validationProvider)
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-            _validationProvider = serviceProvider.GetService<IValidationProvider>();
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _validationProvider = validationProvider;
         }
 
-        protected async Task<IActionResult> ExecuteCommand<TCommand, TRequest, TResponse, TEntity>(TRequest request) where TCommand : BaseCommand<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse, new() where TEntity : class
+        protected async Task<IActionResult> ExecuteRequest<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : BaseRequest<TResponse>
         {
             try
             {
-                var validator = _validationProvider.GetValidator<TRequest>();
-                if (validator != null)
+                if (_validationProvider != null)
                 {
-                    var validationResult = await validator.ValidateAsync(request);
-                    if (!validationResult.IsValid)
+                    var validator = _validationProvider.GetValidator<TRequest>();
+                    if (validator != null)
                     {
-                        return BadRequest(validationResult.Errors);
+                        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+                        if (!validationResult.IsValid)
+                        {
+                            return BadRequest(validationResult.Errors);
+                        }
                     }
                 }
 
-                var command = _serviceProvider.GetService<TCommand>();
-
-                if (command == null) throw new InvalidOperationException($"Comando {typeof(TCommand).Name} não registrado.");
-
-                var response = await command.ExecuteAsync(request);
-
-                if (!response.Success) return BadRequest(response);
-
-                return Ok(response);
+                var response = await _mediator.Send(request, cancellationToken);
+                return response != null ? Ok(response) : NotFound();
             }
             catch (Exception ex)
             {
-                var errorResponse = new TResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    StatusCode = 500
-                };
-                return StatusCode(500, errorResponse);
-            }
-        }
-
-        protected async Task<IActionResult> ExecuteQuery<TQuery, TRequest, TResponse, TEntity>(TRequest request) where TQuery : BaseQuery<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse, new() where TEntity : class
-        {
-            try
-            {
-                var query = _serviceProvider.GetService<TQuery>();
-
-                if (query == null) new InvalidOperationException($"Consulta não registrada.");
-
-                var response = await query.ExecuteAsync(request);
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new TResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    StatusCode = 500
-                };
-                return StatusCode(500, errorResponse);
+                return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }
     }

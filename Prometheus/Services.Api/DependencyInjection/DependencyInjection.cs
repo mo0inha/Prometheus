@@ -1,7 +1,7 @@
 ﻿using Application.Shared;
 using Application.Shared.Interfaces;
 using FluentValidation;
-using System.Reflection;
+using MediatR;
 
 namespace Services.Api.DependencyInjection
 {
@@ -9,76 +9,74 @@ namespace Services.Api.DependencyInjection
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            return services.AddValidators().AddMediatRConfiguration().AddInfrastructure().AddHandlers();
+        }
+
+        private static IServiceCollection AddValidators(this IServiceCollection services)
+        {
             services.AddValidatorsFromAssembly(Application.AssemblyReference.Assembly, includeInternalTypes: true);
 
             services.AddSingleton<IValidationProvider>(sp => new OptionalValidationProvider(sp));
 
+            return services;
+        }
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            var validatorTypes = assemblies.SelectMany(a => a.GetTypes())
-                .Where(t => t.IsClass && !t.IsAbstract && typeof(IValidator).IsAssignableFrom(t))
-                .ToList();
-
-            foreach (var validatorType in validatorTypes)
+        private static IServiceCollection AddMediatRConfiguration(
+            this IServiceCollection services
+        )
+        {
+            services.AddMediatR(cfg =>
             {
-                services.AddScoped(validatorType);
-            }
-
-            services.AddScoped<IRepository, Repository>();
-
-            var commandTypes = assemblies.SelectMany(a => a.GetTypes())
-                .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseCommand<,,>)))
-                .ToList();
-
-            foreach (var commandType in commandTypes)
-            {
-                services.AddScoped(commandType);
-            }
-
-            var queryTypes = assemblies.SelectMany(a => a.GetTypes())
-                .Where(t => t.IsClass && !t.IsAbstract && IsSubclassOfGeneric(t, typeof(BaseQuery<,,>)))
-                .ToList();
-
-            foreach (var queryType in queryTypes)
-            {
-                services.AddScoped(queryType);
-            }
-
+                cfg.RegisterServicesFromAssembly(Application.AssemblyReference.Assembly);
+            });
 
             return services;
         }
 
-        private static bool IsSubclassOfGeneric(Type type, Type genericType)
+        private static IServiceCollection AddHandlers(this IServiceCollection services)
         {
-            while (type != null && type != typeof(object))
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (var assembly in assemblies)
             {
-                var currentType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+                var handlerTypes = assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.BaseType != null && t.BaseType.IsGenericType && (t.BaseType.GetGenericTypeDefinition() == typeof(BaseCommand<,,>) || t.BaseType.GetGenericTypeDefinition() == typeof(BaseQuery<,,>))).ToList();
 
-                if (currentType == genericType)
+                foreach (var handlerType in handlerTypes)
                 {
-                    return true;
+                    var interfaces = handlerType.GetInterfaces();
+                    foreach (var @interface in interfaces)
+                    {
+                        if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
+                        {
+                            Console.WriteLine($"Registering {@interface.FullName} as {handlerType.FullName}");
+                            services.AddScoped(@interface, handlerType);
+                        }
+                    }
                 }
-
-                type = type.BaseType;
             }
-            return false;
+
+            return services;
         }
 
-        public class OptionalValidationProvider : IValidationProvider
+        private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
-            private readonly IServiceProvider _serviceProvider;
+            services.AddScoped<IRepository, Repository>();
+            return services;
+        }
+    }
 
-            public OptionalValidationProvider(IServiceProvider serviceProvider)
-            {
-                _serviceProvider = serviceProvider;
-            }
+    public class OptionalValidationProvider : IValidationProvider
+    {
+        private readonly IServiceProvider _serviceProvider;
 
-            public IValidator<T> GetValidator<T>()
-            {
-                return _serviceProvider.GetService<IValidator<T>>();
-            }
+        public OptionalValidationProvider(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public IValidator<T> GetValidator<T>()
+        {
+            return _serviceProvider.GetService<IValidator<T>>();
         }
     }
 }

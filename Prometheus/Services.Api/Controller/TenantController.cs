@@ -1,69 +1,56 @@
-﻿using Application.Commands;
-using Application.Queries;
-using Domain.Entities;
-using Domain.Request;
+﻿using Domain.Request;
 using Domain.Response;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Services.Api.DependencyInjection;
 using Services.Api.Shared;
 
-namespace Services.Api.Controller
+[Route("api/[controller]")]
+[ApiController]
+public class TenantController : PrometheusController
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TenantController : PrometheusController
+    public TenantController(IMediator mediator, IValidationProvider validationProvider) : base(mediator, validationProvider) { }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request, CancellationToken cancellationToken)
     {
-        public TenantController(IServiceProvider serviceProvider) : base(serviceProvider)
-        {
-        }
+        return await ExecuteRequest<CreateTenantRequest, CreateTenantResponse>(request, cancellationToken);
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request)
-        {
-            return await ExecuteCommand<CreateTenantCommand, CreateTenantRequest, CreateTenantResponse, Tenant>(request);
-        }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTenant([FromRoute] Guid id, [FromBody] UpdateTenantRequest request, CancellationToken cancellationToken)
+    {
+        request.SetId(id);
+        return await ExecuteRequest<UpdateTenantRequest, UpdateTenantResponse>(request, cancellationToken);
+    }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTenant([FromRoute] Guid id, UpdateTenantRequest request)
-        {
-            request.SetId(id);
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchTenant([FromRoute] Guid id, [FromBody] PatchTenantRequest request, CancellationToken cancellationToken)
+    {
+        request.SetId(id);
+        return await ExecuteRequest<PatchTenantRequest, PatchTenantResponse>(request, cancellationToken);
+    }
 
-            return await ExecuteCommand<UpdateTenantCommand, UpdateTenantRequest, UpdateTenantResponse, Tenant>(request);
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTenant([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var request = new DeleteTenantRequest();
+        request.SetId(id);
+        return await ExecuteRequest<DeleteTenantRequest, DeleteTenantResponse>(request, cancellationToken);
+    }
 
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchTenant(Guid id, UpdateTenantRequest request)
-        {
-            request.SetId(id);
+    [HttpGet]
+    public async Task<IActionResult> GetAllTenant([FromQuery] GetTenantRequest request, [FromQuery] int page, [FromQuery] int index, CancellationToken cancellationToken)
+    {
+        request.SetNumberRegistryPage(index, page);
+        return await ExecuteRequest<GetTenantRequest, GetTenantResponse>(request, cancellationToken);
+    }
 
-            return await ExecuteCommand<UpdateTenantCommand, UpdateTenantRequest, UpdateTenantResponse, Tenant>(request);
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTenant([FromRoute] Guid id)
-        {
-            var request = new DeleteTenantRequest();
-
-            request.SetId(id);
-
-            return await ExecuteCommand<DeleteTenantCommand, DeleteTenantRequest, DeleteTenantResponse, Tenant>(request);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAllTenant([FromQuery] GetTenantRequest request, [FromQuery] int page, [FromQuery] int index)
-        {
-            request.SetNumberRegistryPage(index, page);
-
-            return await ExecuteQuery<GetTenantQuery, GetTenantRequest, GetTenantResponse, Tenant>(request);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetByIdTenant([FromRoute] Guid id)
-        {
-            var request = new GetByIdTenantRequest();
-
-            request.SetId(id);
-
-            return await ExecuteQuery<GetByIdTenantQuery, GetByIdTenantRequest, GetByIdTenantResponse, Tenant>(request);
-        }
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetByIdTenant([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var request = new GetByIdTenantRequest();
+        request.SetId(id);
+        return await ExecuteRequest<GetByIdTenantRequest, GetByIdTenantResponse>(request, cancellationToken);
     }
 }

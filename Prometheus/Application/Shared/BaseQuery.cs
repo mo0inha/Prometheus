@@ -1,10 +1,11 @@
 ﻿using Application.Shared.Interfaces;
 using Domain.Shared.Request;
 using Domain.Shared.Response;
+using MediatR;
 
 namespace Application.Shared
 {
-    public abstract class BaseQuery<TEntity, TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse where TEntity : class
+    public abstract class BaseQuery<TEntity, TRequest, TResponse> : IRequestHandler<TRequest, TResponse> where TRequest : BaseRequest<TResponse> where TResponse : BaseResponse where TEntity : class
     {
         public int skip;
         protected readonly IRepository _repository;
@@ -30,6 +31,11 @@ namespace Application.Shared
                 response.SetError(ex.Message, 500);
                 return response;
             }
+        }
+
+        public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken)
+        {
+            return await ExecuteAsync(request, cancellationToken);
         }
     }
 }
