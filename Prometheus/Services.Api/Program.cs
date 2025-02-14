@@ -28,6 +28,11 @@ if (app.Environment.IsEnvironment("Delevopment") || app.Environment.IsEnvironmen
     app.UseSwaggerUI();
 }
 
+app.UseCors(x => x.AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowAnyOrigin()
+);
+
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

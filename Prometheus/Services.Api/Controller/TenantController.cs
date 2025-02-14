@@ -1,5 +1,5 @@
-﻿using Domain.Request;
-using Domain.Response;
+﻿using Domain.Request.TenantRequest;
+using Domain.Response.TenantResponse;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Services.Api.DependencyInjection;
@@ -40,9 +40,9 @@ public class TenantController : PrometheusController
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllTenant([FromQuery] GetTenantRequest request, [FromQuery] int page, [FromQuery] int index, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAllTenant([FromQuery] GetTenantRequest request, [FromQuery] int pageIndex, [FromQuery] int pageSize, CancellationToken cancellationToken)
     {
-        request.SetNumberRegistryPage(index, page);
+        request.SetNumberRegistryPage(pageSize, pageIndex);
         return await ExecuteRequest<GetTenantRequest, GetTenantResponse>(request, cancellationToken);
     }
 

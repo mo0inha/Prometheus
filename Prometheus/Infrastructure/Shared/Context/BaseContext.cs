@@ -21,6 +21,7 @@ namespace Infrastructure.Shared.Context
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<Unity> Unities { get; set; }
+        public DbSet<TestEntity> TestEntities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
